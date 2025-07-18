@@ -3,7 +3,7 @@ A simple fix for tweaker not loading in some MC dev env
 
 [![JitPack State](https://jitpack.io/v/Water-OR/MCTweakerDevEnvFix.svg)](https://jitpack.io/#Water-OR/MCTweakerDevEnvFix)
 
-## Add following to your `build.gradle.kts` to active this
+## Add following to your `build.gradle.kts` to activate this
 ```gradle
 repositories {
     maven("https://jitpack.io") {
