@@ -19,4 +19,5 @@ dependencies {
 }
 ```
 
-You can disable it by setting `mcTweakerDevEnvFix.disabled` to `false`
+> [!NOTE]
+> You can disable it by setting `mcTweakerDevEnvFix.disabled` to `false`
