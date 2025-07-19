@@ -15,7 +15,7 @@ repositories {
 }
 
 dependencies {
-    runtimeOnly("com.github:Water-OR:MCTweakerDevEnvFix:1.0")
+    runtimeOnly("com.github:Water-OR:MCTweakerDevEnvFix:1.1")
 }
 ```
 
