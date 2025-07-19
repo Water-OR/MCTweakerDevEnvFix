@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +24,7 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * First look up the {@code TweakClass} attribute.<br>
  * Following action will not be triggered if it is not found.<br>
- * The result will be stored as {@code clazz}.
+ * The result will be stored as {@code tweak}.
  * </p>
  * <p>
  * After the attribute found, look up the {@code TweakOrder} attribute.<br>
@@ -33,15 +32,14 @@ import org.apache.logging.log4j.Logger;
  * The result will be stored as {@code order}
  * </p>
  * <p>
- * Then bundle the {@code clazz} and {@code order} as {@link DevTweakerFix.Info}.<br>
+ * Then bundle the {@code tweak} and {@code order} as {@link net.llvg.dev_tweaker_fix.TweakInfo}.<br>
  * After that put the bundle into a list.
  * </p>
  * <p>
  * After searching in all urls, sort the list.<br>
- * Then put {@code clazz} of each element in the list into {@code TweakClasses} of {@link net.minecraft.launchwrapper.Launch#blackboard}
+ * Then put {@code tweak} of each element in the list into {@code TweakClasses} of {@link net.minecraft.launchwrapper.Launch#blackboard}
  * </p>
  */
-@SuppressWarnings ("unused")
 public final class DevTweakerFix
   implements
   IFMLLoadingPlugin
@@ -49,6 +47,14 @@ public final class DevTweakerFix
     private static final Logger logger = LogManager.getLogger("Develop Env Tweaker Fix");
     private static final Object lock = new Object();
     private static volatile boolean invoked = false;
+    
+    /**
+     * <p>
+     * A default constructor which should not be called manually.
+     * It will be automatically invoked by FML.
+     * </p>
+     */
+    public DevTweakerFix() { /* Do Nothing */ }
     
     @Override
     public String[] getASMTransformerClass() {
@@ -91,7 +97,7 @@ public final class DevTweakerFix
         @SuppressWarnings ("unchecked")
         List<String> tweakers = (List<String>) tweakersRaw;
         
-        List<Info> infos = new ArrayList<>();
+        List<TweakInfo> infos = new ArrayList<>();
         for (URL url : Launch.classLoader.getURLs()) {
             if (
               !"file".equalsIgnoreCase(url.getProtocol()) ||
@@ -99,10 +105,10 @@ public final class DevTweakerFix
             ) continue;
             try (JarFile jar = new JarFile(new File(url.toURI()))) {
                 Optional.ofNullable(jar.getManifest()).map(Manifest::getMainAttributes).ifPresent(
-                  attr -> Optional.ofNullable(attr.getValue("TweakClass")).ifPresent(clazz -> {
+                  attr -> Optional.ofNullable(attr.getValue("TweakClass")).ifPresent(tweak -> {
                       int order = Optional.ofNullable(attr.getValue("TweakOrder")).map(Ints::tryParse).orElse(0);
-                      logger.info("Found tweaker in url '{}', class '{}', order '{}'", url.toExternalForm(), clazz, order);
-                      infos.add(new Info(clazz, order));
+                      logger.info("Found tweaker in url '{}', class '{}', order '{}'", url.toExternalForm(), tweak, order);
+                      infos.add(new TweakInfo(tweak, order));
                   })
                 );
             } catch (IOException | URISyntaxException e) {
@@ -110,7 +116,7 @@ public final class DevTweakerFix
             }
         }
         
-        infos.stream().sorted(Comparator.comparingInt(Info::getOrder)).forEach(it -> tweakers.add(it.clazz));
+        infos.stream().sorted().map(TweakInfo::getTweak).forEach(tweakers::add);
         logger.info("Finish looking up tweakers");
     }
     
@@ -119,30 +125,4 @@ public final class DevTweakerFix
         return null;
     }
     
-    /**
-     * <p>
-     * A bundle of tweaker {@code clazz} and {@code order}.<br>
-     * Be used in tweaker sorting.
-     * </p>
-     */
-    private static class Info {
-        private final String clazz;
-        private final int order;
-        
-        public Info(
-          String clazz,
-          int order
-        ) {
-            this.clazz = clazz;
-            this.order = order;
-        }
-        
-        public int getOrder() {
-            return order;
-        }
-        
-        public String getClazz() {
-            return clazz;
-        }
-    }
 }
